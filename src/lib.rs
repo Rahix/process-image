@@ -7,6 +7,8 @@ pub use access::{BitMut, DWordMut, LWordMut, WordMut};
 ///
 /// Addresses must be aligned to the size of the datatype (i.e. word=2, dword=4, lword=8).
 ///
+/// Multi-byte datatypes are always accessed in big-endian order.
+///
 /// # Example
 /// ```
 /// let pi = [0x00; 16];
@@ -40,17 +42,17 @@ macro_rules! tag {
     ($buf:expr, W, $addr:literal) => {{
         let buffer: &[u8] = $buf;
         assert!($addr % 2 == 0, "Word address must be divisible by 2");
-        u16::from_le_bytes(buffer[$addr..$addr + 2].try_into().unwrap())
+        u16::from_be_bytes(buffer[$addr..$addr + 2].try_into().unwrap())
     }};
     ($buf:expr, D, $addr:literal) => {{
         let buffer: &[u8] = $buf;
         assert!($addr % 4 == 0, "Double word address must be divisible by 4");
-        u32::from_le_bytes(buffer[$addr..$addr + 4].try_into().unwrap())
+        u32::from_be_bytes(buffer[$addr..$addr + 4].try_into().unwrap())
     }};
     ($buf:expr, L, $addr:literal) => {{
         let buffer: &[u8] = $buf;
         assert!($addr % 8 == 0, "Long word address must be divisible by 8");
-        u64::from_le_bytes(buffer[$addr..$addr + 8].try_into().unwrap())
+        u64::from_be_bytes(buffer[$addr..$addr + 8].try_into().unwrap())
     }};
     ($buf:expr, $addr1:literal, $addr2:literal) => {{
         let buffer: &[u8] = $buf;
@@ -61,6 +63,8 @@ macro_rules! tag {
 /// Mutable access to tag values from a process image with absolute addressing.
 ///
 /// Addresses must be aligned to the size of the datatype (i.e. word=2, dword=4, lword=8).
+///
+/// Multi-byte datatypes are always accessed in big-endian order.
 ///
 /// # Example
 /// ```
@@ -171,21 +175,21 @@ macro_rules! tag_method {
         #[inline(always)]
         $vis fn $name(&self) -> u16 {
             assert!($addr % 2 == 0, "Word address must be divisible by 2");
-            u16::from_le_bytes(self.buf[$addr..$addr + 2].try_into().unwrap())
+            u16::from_be_bytes(self.buf[$addr..$addr + 2].try_into().unwrap())
         }
     };
     ($vis:vis, $name:ident, const, D, $addr:literal) => {
         #[inline(always)]
         $vis fn $name(&self) -> u32 {
             assert!($addr % 4 == 0, "Double word address must be divisible by 4");
-            u16::from_le_bytes(self.buf[$addr..$addr + 4].try_into().unwrap())
+            u16::from_be_bytes(self.buf[$addr..$addr + 4].try_into().unwrap())
         }
     };
     ($vis:vis, $name:ident, const, L, $addr:literal) => {
         #[inline(always)]
         $vis fn $name(&self) -> u64 {
             assert!($addr % 8 == 0, "Long word address must be divisible by 8");
-            u64::from_le_bytes(self.buf[$addr..$addr + 8].try_into().unwrap())
+            u64::from_be_bytes(self.buf[$addr..$addr + 8].try_into().unwrap())
         }
     };
     ($vis:vis, $name:ident, const, $addr1:literal, $addr2:literal) => {
@@ -262,10 +266,10 @@ mod tests {
         *tag_mut!(&mut pi, X, 2, 7) = true;
         assert_eq!(tag!(&pi, B, 2), 0x80);
 
-        assert_eq!(tag!(&pi, W, 2), 0xff80);
-        assert_eq!(*tag_mut!(&mut pi, W, 2), 0xff80);
-        assert_eq!(tag!(&pi, D, 0), 0xff80aa54);
-        assert_eq!(*tag_mut!(&mut pi, D, 0), 0xff80aa54);
+        assert_eq!(tag!(&pi, W, 2), 0x80ff);
+        assert_eq!(*tag_mut!(&mut pi, W, 2), 0x80ff);
+        assert_eq!(tag!(&pi, D, 0), 0x54aa80ff);
+        assert_eq!(*tag_mut!(&mut pi, D, 0), 0x54aa80ff);
 
         *tag_mut!(&mut pi, W, 2) = 0xbeef;
         assert_eq!(tag!(&pi, W, 2), 0xbeef);
@@ -283,7 +287,7 @@ mod tests {
 
     #[test]
     fn pi_macro_smoke1() {
-        let mut pi_buffer = [128, 0x55, 0xad, 0xde];
+        let mut pi_buffer = [128, 0x55, 0xde, 0xad];
 
         let pi = TestPi::new(&pi_buffer);
         assert_eq!(pi.btn_start(), true);

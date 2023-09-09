@@ -57,7 +57,7 @@ pub struct WordMut<'a> {
 impl<'a> WordMut<'a> {
     #[inline(always)]
     pub fn new(buf: &'a mut [u8; 2]) -> Self {
-        let value = u16::from_le_bytes(*buf);
+        let value = u16::from_be_bytes(*buf);
         Self { buf, value }
     }
 }
@@ -81,7 +81,7 @@ impl DerefMut for WordMut<'_> {
 impl Drop for WordMut<'_> {
     #[inline(always)]
     fn drop(&mut self) {
-        *self.buf = self.value.to_le_bytes();
+        *self.buf = self.value.to_be_bytes();
     }
 }
 
@@ -98,7 +98,7 @@ pub struct DWordMut<'a> {
 impl<'a> DWordMut<'a> {
     #[inline(always)]
     pub fn new(buf: &'a mut [u8; 4]) -> Self {
-        let value = u32::from_le_bytes(*buf);
+        let value = u32::from_be_bytes(*buf);
         Self { buf, value }
     }
 }
@@ -122,7 +122,7 @@ impl DerefMut for DWordMut<'_> {
 impl Drop for DWordMut<'_> {
     #[inline(always)]
     fn drop(&mut self) {
-        *self.buf = self.value.to_le_bytes();
+        *self.buf = self.value.to_be_bytes();
     }
 }
 
@@ -139,7 +139,7 @@ pub struct LWordMut<'a> {
 impl<'a> LWordMut<'a> {
     #[inline(always)]
     pub fn new(buf: &'a mut [u8; 8]) -> Self {
-        let value = u64::from_le_bytes(*buf);
+        let value = u64::from_be_bytes(*buf);
         Self { buf, value }
     }
 }
@@ -163,6 +163,6 @@ impl DerefMut for LWordMut<'_> {
 impl Drop for LWordMut<'_> {
     #[inline(always)]
     fn drop(&mut self) {
-        *self.buf = self.value.to_le_bytes();
+        *self.buf = self.value.to_be_bytes();
     }
 }
