@@ -1,5 +1,5 @@
-## `process-image`
-### Basic Idea
+# `process-image`
+## Basic Idea
 A rust crate that helps accessing values from a "process image" (PI).  A "process image" is a block of data in the industrial automation world.  Usually, you can access its contents in two ways:
 
 1. Absolute access:  By directly addressing values in the PI, you can read or write data.  The relevant standard (IEC 61131-3) defines the syntax for this.  Examples: `%IX15.3`, `%QW7`
@@ -11,8 +11,8 @@ A rust crate that helps accessing values from a "process image" (PI).  A "proces
 - Must be zero-cost.
 - Must be able to use externally-owned slices (mutable or immutable) for the PI.
 
-### Ideas
-#### 1. Smart data structure
+## Ideas
+### 1. Smart data structure
 ```rust
 struct Pi<'a> {
     pub btn_start: bool,
@@ -54,15 +54,15 @@ pi.speed -= 10;
 write_pi(&buf);
 ```
 
-##### Advantages
+#### Advantages
 - Tag access is literally variable/field access.  Makes the code look most natural.
 - Probably can be made generic about mutability by storing the `_pi_ref` in an `Option<>`.
 
-##### Disadvantages
+#### Disadvantages
 - Unclear if this will always be zero-cost.  If it does not get optimized, it blows up to a very large size.
 - Sharing a `&mut Pi` to a different function may immediately kill the zero-costness.
 
-#### 2. Opaque struct with acessors
+### 2. Opaque struct with acessors
 ```rust
 struct PiMut<'a> {
     pi: &mut 'a [u8],
@@ -118,8 +118,17 @@ pi.btn_start().write(|w| w.set(true));
 let speed = pi.speed().read();
 ```
 
-##### Advantages
+#### Advantages
 - Zero-cost enforcement.
 
-##### Disadvantages
+#### Disadvantages
 - Very verbose
+
+## Misc. Design Questions
+### Alignment
+- Do we require the PI slice to come pre-aligned?
+- Do we enforce the PI slice to be aligned by using `&[u32]`?
+- Do we accept non-aligned PIs by just never making alignment assumptions?
+
+=> Experimentation with godbolt seems to indicate that loading the values from
+unaligned offsets is no slower than loading from aligned offsets.
