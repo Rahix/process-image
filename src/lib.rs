@@ -200,6 +200,74 @@ macro_rules! tag_method {
     };
 }
 
+/// Build tag table for symbolic access to a process image.
+///
+/// - You will get two structs, one for mutable and one for immutable access (or just one of them,
+///   if you want).
+/// - The process image has a fixed size which is always enforced.
+/// - The tag addresses are in the format described in the [`tag!()`][`tag`] macro.
+///
+/// ## Example
+/// ```
+/// process_image::process_image! {
+///     //                                      +-- Size of the process image in bytes
+///     //                                      V
+///     pub struct PiExample, mut PiExampleMut: 16 {
+///         //  +-- Tag Name  +-- Absolute Address
+///         //  V             V
+///         pub sensor_left: (X, 0, 0),     // %MX0.0
+///         pub sensor_right: (X, 0, 1),    // %MX0.1
+///         pub temperature: (D, 4),        // %MD4
+///         pub setpoint: (W, 2),           // %MW2
+///     }
+/// }
+///
+/// let mut pi_buf = [0x00; 16];
+/// let pi = PiExample::from(&pi_buf);
+///
+/// dbg!(pi.sensor_left());
+/// dbg!(pi.sensor_left());
+///
+/// // You need to use try_from() when using a slice.  The unwrap() will panic when the size of the
+/// // slice does not match the size of the process image.
+/// let pi_slice = &pi_buf[..];
+/// let pi = PiExample::try_from(pi_slice).unwrap();
+///
+/// // Mutable access:
+/// let pi_slice_mut = &mut pi_buf[..];
+/// let mut pi = PiExampleMut::try_from(pi_slice_mut).unwrap();
+/// *pi.temperature() = 1234;
+/// *pi.setpoint() = 72;
+/// *pi.sensor_left() = false;
+/// ```
+///
+/// As mentioned above, you can also generate just the mutable or just the immutable version:
+///
+/// ```
+/// # let buffer_in = [0x00u8; 16];
+/// # let mut buffer_out = [0x00u8; 8];
+/// process_image::process_image! {
+///     pub struct PiInputs: 16 {
+///         pub sensor_left: (X, 0, 0),     // %IX0.0
+///         pub sensor_right: (X, 0, 1),    // %IX0.1
+///         pub temperature: (D, 12),       // %ID12
+///     }
+/// }
+/// process_image::process_image! {
+///     pub struct mut PiOutputs: 8 {
+///         pub indicator_green: (X, 1, 0), // %QX1.0
+///         pub indicator_red: (X, 1, 2),   // %QX1.2
+///         pub setpoint: (W, 2),           // %QW2
+///     }
+/// }
+///
+/// let inp = PiInputs::try_from(&buffer_in).unwrap();
+/// let mut out = PiOutputs::try_from(&mut buffer_out).unwrap();
+///
+/// let left_or_right = inp.sensor_left() || inp.sensor_right();
+/// *out.indicator_green() = !left_or_right;
+/// *out.indicator_red() = left_or_right;
+/// ```
 #[macro_export]
 macro_rules! process_image {
     (
