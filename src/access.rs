@@ -9,6 +9,7 @@ pub struct BitMut<'a> {
 }
 
 impl<'a> BitMut<'a> {
+    #[inline(always)]
     pub fn new(buf: &'a mut u8, index: u8) -> Self {
         let value = *buf & (1 << index) != 0;
         Self { buf, index, value }
@@ -18,18 +19,21 @@ impl<'a> BitMut<'a> {
 impl Deref for BitMut<'_> {
     type Target = bool;
 
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         &self.value
     }
 }
 
 impl DerefMut for BitMut<'_> {
+    #[inline(always)]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.value
     }
 }
 
 impl Drop for BitMut<'_> {
+    #[inline(always)]
     fn drop(&mut self) {
         *self.buf &= !(1 << self.index);
         *self.buf |= u8::from(self.value) << self.index;
@@ -43,6 +47,7 @@ pub struct WordMut<'a> {
 }
 
 impl<'a> WordMut<'a> {
+    #[inline(always)]
     pub fn new(buf: &'a mut [u8; 2]) -> Self {
         let value = u16::from_le_bytes(*buf);
         Self { buf, value }
@@ -52,18 +57,21 @@ impl<'a> WordMut<'a> {
 impl Deref for WordMut<'_> {
     type Target = u16;
 
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         &self.value
     }
 }
 
 impl DerefMut for WordMut<'_> {
+    #[inline(always)]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.value
     }
 }
 
 impl Drop for WordMut<'_> {
+    #[inline(always)]
     fn drop(&mut self) {
         *self.buf = self.value.to_le_bytes();
     }
@@ -76,6 +84,7 @@ pub struct DWordMut<'a> {
 }
 
 impl<'a> DWordMut<'a> {
+    #[inline(always)]
     pub fn new(buf: &'a mut [u8; 4]) -> Self {
         let value = u32::from_le_bytes(*buf);
         Self { buf, value }
@@ -85,18 +94,21 @@ impl<'a> DWordMut<'a> {
 impl Deref for DWordMut<'_> {
     type Target = u32;
 
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         &self.value
     }
 }
 
 impl DerefMut for DWordMut<'_> {
+    #[inline(always)]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.value
     }
 }
 
 impl Drop for DWordMut<'_> {
+    #[inline(always)]
     fn drop(&mut self) {
         *self.buf = self.value.to_le_bytes();
     }
@@ -109,6 +121,7 @@ pub struct LWordMut<'a> {
 }
 
 impl<'a> LWordMut<'a> {
+    #[inline(always)]
     pub fn new(buf: &'a mut [u8; 8]) -> Self {
         let value = u64::from_le_bytes(*buf);
         Self { buf, value }
@@ -118,18 +131,21 @@ impl<'a> LWordMut<'a> {
 impl Deref for LWordMut<'_> {
     type Target = u64;
 
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         &self.value
     }
 }
 
 impl DerefMut for LWordMut<'_> {
+    #[inline(always)]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.value
     }
 }
 
 impl Drop for LWordMut<'_> {
+    #[inline(always)]
     fn drop(&mut self) {
         *self.buf = self.value.to_le_bytes();
     }
