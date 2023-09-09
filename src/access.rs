@@ -1,6 +1,10 @@
 use core::ops::Deref;
 use core::ops::DerefMut;
 
+/// Mutable accessor for a single bit.
+///
+/// This type dereferences to an `&mut bool` which can be used to write the value of a single bit
+/// in the process image.
 #[derive(Debug)]
 pub struct BitMut<'a> {
     buf: &'a mut u8,
@@ -40,6 +44,10 @@ impl Drop for BitMut<'_> {
     }
 }
 
+/// Mutable accessor for a word.
+///
+/// This type dereferences to an `&mut u16` which can be used to write the value of a word in the
+/// process image.
 #[derive(Debug)]
 pub struct WordMut<'a> {
     buf: &'a mut [u8; 2],
@@ -77,6 +85,10 @@ impl Drop for WordMut<'_> {
     }
 }
 
+/// Mutable accessor for a double word.
+///
+/// This type dereferences to an `&mut u32` which can be used to write the value of a double word
+/// in the process image.
 #[derive(Debug)]
 pub struct DWordMut<'a> {
     buf: &'a mut [u8; 4],
@@ -114,6 +126,10 @@ impl Drop for DWordMut<'_> {
     }
 }
 
+/// Mutable accessor for a long word.
+///
+/// This type dereferences to an `&mut u64` which can be used to write the value of a long word in
+/// the process image.
 #[derive(Debug)]
 pub struct LWordMut<'a> {
     buf: &'a mut [u8; 8],

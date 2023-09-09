@@ -3,6 +3,30 @@
 mod access;
 pub use access::{BitMut, DWordMut, LWordMut, WordMut};
 
+/// Read tag values from a process image with absolute addressing.
+///
+/// Addresses must be aligned to the size of the datatype (i.e. word=2, dword=4, lword=8).
+///
+/// # Example
+/// ```
+/// let pi = [0x00; 16];
+///
+/// // Bit access
+/// let b1: bool = process_image::tag!(&pi, X, 0, 0);   // %MX0.0
+/// let b2: bool = process_image::tag!(&pi, 0, 1);      // %MX0.1
+///
+/// // Byte access
+/// let by: u8 = process_image::tag!(&pi, B, 1);        // %MB1
+///
+/// // Word access
+/// let w: u16 = process_image::tag!(&pi, W, 2);        // %MW2
+///
+/// // Double word access
+/// let d: u32 = process_image::tag!(&pi, D, 4);        // %MD4
+///
+/// // Long word access
+/// let l: u64 = process_image::tag!(&pi, L, 8);        // %ML8
+/// ```
 #[macro_export]
 macro_rules! tag {
     ($buf:expr, X, $addr1:literal, $addr2:literal) => {{
@@ -34,6 +58,30 @@ macro_rules! tag {
     }};
 }
 
+/// Mutable access to tag values from a process image with absolute addressing.
+///
+/// Addresses must be aligned to the size of the datatype (i.e. word=2, dword=4, lword=8).
+///
+/// # Example
+/// ```
+/// let mut pi = [0x00; 16];
+///
+/// // Bit access
+/// *process_image::tag_mut!(&mut pi, X, 0, 0) = true;  // %MX0.0
+/// *process_image::tag_mut!(&mut pi, 0, 1) = true;     // %MX0.1
+///
+/// // Byte access
+/// *process_image::tag_mut!(&mut pi, B, 1) = 42u8;     // %MB1
+///
+/// // Word access
+/// *process_image::tag_mut!(&mut pi, W, 2) = 1337u16;  // %MW2
+///
+/// // Double word access
+/// *process_image::tag_mut!(&mut pi, D, 4) = 0xdeadbeef; // %MD4
+///
+/// // Long word access
+/// *process_image::tag_mut!(&mut pi, L, 8) = 1;        // %ML8
+/// ```
 #[macro_export]
 macro_rules! tag_mut {
     ($buf:expr, X, $addr1:literal, $addr2:literal) => {{
