@@ -1,4 +1,4 @@
-`process-image`
+`process-image` [![crates.io page](https://img.shields.io/crates/v/process-image)](https://crates.io/crates/process-image) [![docs.rs](https://docs.rs/process-image/badge.svg)](https://docs.rs/process-image)
 ===============
 `process-image` is a Rust crate for conveniently accessing data inside a
 _process image_ using zero-cost abstractions.  A _process image_ (short PI) is
