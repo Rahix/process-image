@@ -182,7 +182,7 @@ macro_rules! tag_method {
         #[inline(always)]
         $vis fn $name(&self) -> u32 {
             assert!($addr % 4 == 0, "Double word address must be divisible by 4");
-            u16::from_be_bytes(self.buf[$addr..$addr + 4].try_into().unwrap())
+            u32::from_be_bytes(self.buf[$addr..$addr + 4].try_into().unwrap())
         }
     };
     ($vis:vis, $name:ident, const, L, $addr:literal) => {
