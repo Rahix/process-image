@@ -1,4 +1,10 @@
 [package]
 name = "process-image"
 version = "0.1.0"
+authors = ["rahix <rahix@rahix.de>"]
 edition = "2021"
+description = "Zero-cost abstraction for convenient access to process image tags."
+repository = "https://github.com/rahix/process-image"
+license = "MIT OR Apache-2.0"
+keywords = ["plc", "automation"]
+categories = ["no-std", "memory-management"]
