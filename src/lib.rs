@@ -268,6 +268,82 @@ macro_rules! process_image {
             )*
         }
     };
+    (
+        $( #[$meta:meta] )*
+        $vis:vis struct mut $ProcessImageMut:ident: $SIZE:literal {
+            $(
+                $( #[$field_meta:meta] )*
+                $field_vis:vis $field_name:ident: ($($tag:tt)+)
+            ),*
+            $(,)?
+        }
+    ) => {
+        $( #[$meta] )*
+        $vis struct $ProcessImageMut<'a> {
+            buf: &'a mut [u8; $SIZE],
+        }
+
+        impl<'a> From<&'a mut [u8; $SIZE]> for $ProcessImageMut<'a> {
+            #[inline(always)]
+            fn from(buf: &'a mut [u8; $SIZE]) -> Self {
+                Self { buf }
+            }
+        }
+
+        impl<'a> TryFrom<&'a mut [u8]> for $ProcessImageMut<'a> {
+            type Error = ::core::array::TryFromSliceError;
+
+            #[inline(always)]
+            fn try_from(buf: &'a mut [u8]) -> Result<Self, Self::Error> {
+                buf.try_into().map(|buf| Self { buf })
+            }
+        }
+
+        impl<'a> $ProcessImageMut<'a> {
+            $(
+                $( #[$field_meta] )*
+                $crate::tag_method!($vis, $field_name, mut, $($tag)+);
+            )*
+        }
+    };
+    (
+        $( #[$meta:meta] )*
+        $vis:vis struct $ProcessImage:ident: $SIZE:literal {
+            $(
+                $( #[$field_meta:meta] )*
+                $field_vis:vis $field_name:ident: ($($tag:tt)+)
+            ),*
+            $(,)?
+        }
+    ) => {
+        $( #[$meta] )*
+        $vis struct $ProcessImage<'a> {
+            buf: &'a [u8; $SIZE],
+        }
+
+        impl<'a> $ProcessImage<'a> {
+            $(
+                $( #[$field_meta] )*
+                $crate::tag_method!($vis, $field_name, const, $($tag)+);
+            )*
+        }
+
+        impl<'a> From<&'a [u8; $SIZE]> for $ProcessImage<'a> {
+            #[inline(always)]
+            fn from(buf: &'a [u8; $SIZE]) -> Self {
+                Self { buf }
+            }
+        }
+
+        impl<'a> TryFrom<&'a [u8]> for $ProcessImage<'a> {
+            type Error = ::core::array::TryFromSliceError;
+
+            #[inline(always)]
+            fn try_from(buf: &'a [u8]) -> Result<Self, Self::Error> {
+                buf.try_into().map(|buf| Self { buf })
+            }
+        }
+    };
 }
 
 #[cfg(test)]
