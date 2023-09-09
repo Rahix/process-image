@@ -42,13 +42,13 @@ pi::process_image! {
 }
 
 // Read-access only
-let pi = PiExample::new(&buf);
+let pi = PiExample::try_from(&buf).unwrap();
 dbg!(pi.sensor_limit_1());
 dbg!(pi.sensor_limit_2());
 dbg!(pi.temperature());
 
 // Read-write access
-let mut pi = PiExampleMut::new(&mut buf);
+let mut pi = PiExampleMut::try_from(&mut buf).unwrap();
 if *pi.sensor_limit_1() {
   *pi.indicator_light() = true;
   *pi.setpoint() = 2300;

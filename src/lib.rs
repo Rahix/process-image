@@ -218,15 +218,26 @@ macro_rules! process_image {
         }
 
         impl<'a> $ProcessImage<'a> {
-            #[inline(always)]
-            pub fn new(buf: &'a [u8]) -> Self {
-                Self { buf: buf.try_into().unwrap() }
-            }
-
             $(
                 $( #[$field_meta] )*
                 $crate::tag_method!($vis, $field_name, const, $($tag)+);
             )*
+        }
+
+        impl<'a> From<&'a [u8; $SIZE]> for $ProcessImage<'a> {
+            #[inline(always)]
+            fn from(buf: &'a [u8; $SIZE]) -> Self {
+                Self { buf }
+            }
+        }
+
+        impl<'a> TryFrom<&'a [u8]> for $ProcessImage<'a> {
+            type Error = ::core::array::TryFromSliceError;
+
+            #[inline(always)]
+            fn try_from(buf: &'a [u8]) -> Result<Self, Self::Error> {
+                buf.try_into().map(|buf| Self { buf })
+            }
         }
 
         $( #[$meta] )*
@@ -234,12 +245,23 @@ macro_rules! process_image {
             buf: &'a mut [u8; $SIZE],
         }
 
-        impl<'a> $ProcessImageMut<'a> {
+        impl<'a> From<&'a mut [u8; $SIZE]> for $ProcessImageMut<'a> {
             #[inline(always)]
-            pub fn new(buf: &'a mut [u8]) -> Self {
-                Self { buf: buf.try_into().unwrap() }
+            fn from(buf: &'a mut [u8; $SIZE]) -> Self {
+                Self { buf }
             }
+        }
 
+        impl<'a> TryFrom<&'a mut [u8]> for $ProcessImageMut<'a> {
+            type Error = ::core::array::TryFromSliceError;
+
+            #[inline(always)]
+            fn try_from(buf: &'a mut [u8]) -> Result<Self, Self::Error> {
+                buf.try_into().map(|buf| Self { buf })
+            }
+        }
+
+        impl<'a> $ProcessImageMut<'a> {
             $(
                 $( #[$field_meta] )*
                 $crate::tag_method!($vis, $field_name, mut, $($tag)+);
@@ -289,14 +311,14 @@ mod tests {
     fn pi_macro_smoke1() {
         let mut pi_buffer = [128, 0x55, 0xde, 0xad];
 
-        let pi = TestPi::new(&pi_buffer);
+        let pi = TestPi::try_from(&pi_buffer).unwrap();
         assert_eq!(pi.btn_start(), true);
         assert_eq!(pi.btn_stop(), false);
         assert_eq!(pi.btn_reset(), true);
         assert_eq!(pi.speed(), 0xdead);
         assert_eq!(pi.length(), 128);
 
-        let mut pi = TestPiMut::new(&mut pi_buffer);
+        let mut pi = TestPiMut::try_from(&mut pi_buffer).unwrap();
         assert_eq!(*pi.btn_start(), true);
         assert_eq!(*pi.btn_stop(), false);
         assert_eq!(*pi.btn_reset(), true);
@@ -309,7 +331,7 @@ mod tests {
         *pi.speed() = 1337;
         *pi.length() = 1;
 
-        let pi = TestPi::new(&pi_buffer);
+        let pi = TestPi::try_from(&pi_buffer).unwrap();
         assert_eq!(pi.btn_start(), false);
         assert_eq!(pi.btn_stop(), true);
         assert_eq!(pi.btn_reset(), true);
