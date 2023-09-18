@@ -292,14 +292,14 @@ macro_rules! process_image {
             )*
         }
 
-        impl<'a> From<&'a [u8; $SIZE]> for $ProcessImage<'a> {
+        impl<'a> ::core::convert::From<&'a [u8; $SIZE]> for $ProcessImage<'a> {
             #[inline(always)]
             fn from(buf: &'a [u8; $SIZE]) -> Self {
                 Self { buf }
             }
         }
 
-        impl<'a> TryFrom<&'a [u8]> for $ProcessImage<'a> {
+        impl<'a> ::core::convert::TryFrom<&'a [u8]> for $ProcessImage<'a> {
             type Error = ::core::array::TryFromSliceError;
 
             #[inline(always)]
@@ -313,14 +313,14 @@ macro_rules! process_image {
             buf: &'a mut [u8; $SIZE],
         }
 
-        impl<'a> From<&'a mut [u8; $SIZE]> for $ProcessImageMut<'a> {
+        impl<'a> ::core::convert::From<&'a mut [u8; $SIZE]> for $ProcessImageMut<'a> {
             #[inline(always)]
             fn from(buf: &'a mut [u8; $SIZE]) -> Self {
                 Self { buf }
             }
         }
 
-        impl<'a> TryFrom<&'a mut [u8]> for $ProcessImageMut<'a> {
+        impl<'a> ::core::convert::TryFrom<&'a mut [u8]> for $ProcessImageMut<'a> {
             type Error = ::core::array::TryFromSliceError;
 
             #[inline(always)]
@@ -351,14 +351,14 @@ macro_rules! process_image {
             buf: &'a mut [u8; $SIZE],
         }
 
-        impl<'a> From<&'a mut [u8; $SIZE]> for $ProcessImageMut<'a> {
+        impl<'a> ::core::convert::From<&'a mut [u8; $SIZE]> for $ProcessImageMut<'a> {
             #[inline(always)]
             fn from(buf: &'a mut [u8; $SIZE]) -> Self {
                 Self { buf }
             }
         }
 
-        impl<'a> TryFrom<&'a mut [u8]> for $ProcessImageMut<'a> {
+        impl<'a> ::core::convert::TryFrom<&'a mut [u8]> for $ProcessImageMut<'a> {
             type Error = ::core::array::TryFromSliceError;
 
             #[inline(always)]
@@ -396,14 +396,14 @@ macro_rules! process_image {
             )*
         }
 
-        impl<'a> From<&'a [u8; $SIZE]> for $ProcessImage<'a> {
+        impl<'a> ::core::convert::From<&'a [u8; $SIZE]> for $ProcessImage<'a> {
             #[inline(always)]
             fn from(buf: &'a [u8; $SIZE]) -> Self {
                 Self { buf }
             }
         }
 
-        impl<'a> TryFrom<&'a [u8]> for $ProcessImage<'a> {
+        impl<'a> ::core::convert::TryFrom<&'a [u8]> for $ProcessImage<'a> {
             type Error = ::core::array::TryFromSliceError;
 
             #[inline(always)]
