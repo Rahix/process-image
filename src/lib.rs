@@ -308,6 +308,13 @@ macro_rules! process_image {
             }
         }
 
+        impl<'a> ::core::convert::AsRef<[u8]> for $ProcessImage<'a> {
+            #[inline(always)]
+            fn as_ref(&self) -> &[u8] {
+                &self.buf[..]
+            }
+        }
+
         $( #[$meta] )*
         $vis struct $ProcessImageMut<'a> {
             buf: &'a mut [u8; $SIZE],
@@ -326,6 +333,20 @@ macro_rules! process_image {
             #[inline(always)]
             fn try_from(buf: &'a mut [u8]) -> Result<Self, Self::Error> {
                 buf.try_into().map(|buf| Self { buf })
+            }
+        }
+
+        impl<'a> ::core::convert::AsRef<[u8]> for $ProcessImageMut<'a> {
+            #[inline(always)]
+            fn as_ref(&self) -> &[u8] {
+                &self.buf[..]
+            }
+        }
+
+        impl<'a> ::core::convert::AsMut<[u8]> for $ProcessImageMut<'a> {
+            #[inline(always)]
+            fn as_mut(&mut self) -> &mut [u8] {
+                &mut self.buf[..]
             }
         }
 
@@ -364,6 +385,20 @@ macro_rules! process_image {
             #[inline(always)]
             fn try_from(buf: &'a mut [u8]) -> Result<Self, Self::Error> {
                 buf.try_into().map(|buf| Self { buf })
+            }
+        }
+
+        impl<'a> ::core::convert::AsRef<[u8]> for $ProcessImageMut<'a> {
+            #[inline(always)]
+            fn as_ref(&self) -> &[u8] {
+                &self.buf[..]
+            }
+        }
+
+        impl<'a> ::core::convert::AsMut<[u8]> for $ProcessImageMut<'a> {
+            #[inline(always)]
+            fn as_mut(&mut self) -> &mut [u8] {
+                &mut self.buf[..]
             }
         }
 
@@ -409,6 +444,13 @@ macro_rules! process_image {
             #[inline(always)]
             fn try_from(buf: &'a [u8]) -> Result<Self, Self::Error> {
                 buf.try_into().map(|buf| Self { buf })
+            }
+        }
+
+        impl<'a> ::core::convert::AsRef<[u8]> for $ProcessImage<'a> {
+            #[inline(always)]
+            fn as_ref(&self) -> &[u8] {
+                &self.buf[..]
             }
         }
     };
