@@ -315,6 +315,16 @@ macro_rules! process_image {
             }
         }
 
+        impl<'a> ::core::fmt::Debug for $ProcessImage<'a> {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                f.debug_struct(::core::stringify!($ProcessImage))
+                    $(
+                    .field(::core::stringify!($field_name), &self.$field_name())
+                    )*
+                    .finish()
+            }
+        }
+
         $( #[$meta] )*
         $vis struct $ProcessImageMut<'a> {
             buf: &'a mut [u8; $SIZE],
@@ -347,6 +357,17 @@ macro_rules! process_image {
             #[inline(always)]
             fn as_mut(&mut self) -> &mut [u8] {
                 &mut self.buf[..]
+            }
+        }
+
+        impl<'a> ::core::fmt::Debug for $ProcessImageMut<'a> {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                let pi = $ProcessImage::from(&*self.buf);
+                f.debug_struct(::core::stringify!($ProcessImageMut))
+                    $(
+                    .field(::core::stringify!($field_name), &pi.$field_name())
+                    )*
+                    .finish()
             }
         }
 
@@ -451,6 +472,16 @@ macro_rules! process_image {
             #[inline(always)]
             fn as_ref(&self) -> &[u8] {
                 &self.buf[..]
+            }
+        }
+
+        impl<'a> ::core::fmt::Debug for $ProcessImage<'a> {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                f.debug_struct(::core::stringify!($ProcessImage))
+                    $(
+                    .field(::core::stringify!($field_name), &self.$field_name())
+                    )*
+                    .finish()
             }
         }
     };
