@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- `tag!()` and `tag_mut!()` can now take dynamic expressions instead of just
+  literals so they can be used with runtime-determined addresses.
 
 
 ## [0.2.0] - 2024-04-13
