@@ -1,6 +1,6 @@
 [package]
 name = "process-image"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["rahix <rahix@rahix.de>"]
 edition = "2021"
 description = "Zero-cost abstraction for convenient access to process image tags."
