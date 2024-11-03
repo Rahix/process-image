@@ -31,30 +31,30 @@ pub use access::{BitMut, DWordMut, LWordMut, WordMut};
 /// ```
 #[macro_export]
 macro_rules! tag {
-    ($buf:expr, X, $addr1:literal, $addr2:literal) => {{
+    ($buf:expr, X, $addr1:expr, $addr2:expr) => {{
         let buffer: &[u8] = $buf;
         buffer[$addr1] & (1 << $addr2) != 0
     }};
-    ($buf:expr, B, $addr:literal) => {{
+    ($buf:expr, B, $addr:expr) => {{
         let buffer: &[u8] = $buf;
         buffer[$addr]
     }};
-    ($buf:expr, W, $addr:literal) => {{
+    ($buf:expr, W, $addr:expr) => {{
         let buffer: &[u8] = $buf;
         assert!($addr % 2 == 0, "Word address must be divisible by 2");
         u16::from_be_bytes(buffer[$addr..$addr + 2].try_into().unwrap())
     }};
-    ($buf:expr, D, $addr:literal) => {{
+    ($buf:expr, D, $addr:expr) => {{
         let buffer: &[u8] = $buf;
         assert!($addr % 4 == 0, "Double word address must be divisible by 4");
         u32::from_be_bytes(buffer[$addr..$addr + 4].try_into().unwrap())
     }};
-    ($buf:expr, L, $addr:literal) => {{
+    ($buf:expr, L, $addr:expr) => {{
         let buffer: &[u8] = $buf;
         assert!($addr % 8 == 0, "Long word address must be divisible by 8");
         u64::from_be_bytes(buffer[$addr..$addr + 8].try_into().unwrap())
     }};
-    ($buf:expr, $addr1:literal, $addr2:literal) => {{
+    ($buf:expr, $addr1:expr, $addr2:expr) => {{
         let buffer: &[u8] = $buf;
         buffer[$addr1] & (1 << $addr2) != 0
     }};
@@ -88,30 +88,30 @@ macro_rules! tag {
 /// ```
 #[macro_export]
 macro_rules! tag_mut {
-    ($buf:expr, X, $addr1:literal, $addr2:literal) => {{
+    ($buf:expr, X, $addr1:expr, $addr2:expr) => {{
         let buffer: &mut [u8] = $buf;
         $crate::BitMut::new(&mut buffer[$addr1], $addr2)
     }};
-    ($buf:expr, B, $addr:literal) => {{
+    ($buf:expr, B, $addr:expr) => {{
         let buffer: &mut [u8] = $buf;
         &mut buffer[$addr]
     }};
-    ($buf:expr, W, $addr:literal) => {{
+    ($buf:expr, W, $addr:expr) => {{
         let buffer: &mut [u8] = $buf;
         assert!($addr % 2 == 0, "Word address must be divisible by 2");
         $crate::WordMut::new((&mut buffer[$addr..$addr + 2]).try_into().unwrap())
     }};
-    ($buf:expr, D, $addr:literal) => {{
+    ($buf:expr, D, $addr:expr) => {{
         let buffer: &mut [u8] = $buf;
         assert!($addr % 4 == 0, "Double word address must be divisible by 4");
         $crate::DWordMut::new((&mut buffer[$addr..$addr + 4]).try_into().unwrap())
     }};
-    ($buf:expr, L, $addr:literal) => {{
+    ($buf:expr, L, $addr:expr) => {{
         let buffer: &mut [u8] = $buf;
         assert!($addr % 8 == 0, "Long word address must be divisible by 8");
         $crate::LWordMut::new((&mut buffer[$addr..$addr + 8]).try_into().unwrap())
     }};
-    ($buf:expr, $addr1:literal, $addr2:literal) => {{
+    ($buf:expr, $addr1:expr, $addr2:expr) => {{
         let buffer: &mut [u8] = $buf;
         $crate::BitMut::new(&mut buffer[$addr1], $addr2)
     }};
