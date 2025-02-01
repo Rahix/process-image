@@ -549,6 +549,7 @@ macro_rules! process_image_owned {
         }
 
         impl $ProcessImage {
+            #[allow(dead_code)]
             #[inline(always)]
             pub fn new_zeroed() -> Self {
                 Self {
@@ -556,16 +557,19 @@ macro_rules! process_image_owned {
                 }
             }
 
+            #[allow(dead_code)]
             #[inline(always)]
             pub fn as_mut(&mut self) -> $ProcessImageMut {
                 $ProcessImageMut::from(&mut self.buf)
             }
 
+            #[allow(dead_code)]
             #[inline(always)]
             pub fn as_slice(&self) -> &[u8] {
                 &self.buf[..]
             }
 
+            #[allow(dead_code)]
             #[inline(always)]
             pub fn as_slice_mut(&mut self) -> &mut [u8] {
                 &mut self.buf[..]
