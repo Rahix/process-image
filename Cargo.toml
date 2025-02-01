@@ -8,3 +8,6 @@ repository = "https://github.com/rahix/process-image"
 license = "MIT OR Apache-2.0"
 keywords = ["plc", "automation"]
 categories = ["no-std", "memory-management"]
+
+[features]
+allow_unaligned_tags = []

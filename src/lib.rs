@@ -3,6 +3,28 @@
 mod access;
 pub use access::{BitMut, DWordMut, LWordMut, WordMut};
 
+#[cfg(feature = "allow_unaligned_tags")]
+#[doc(hidden)]
+#[macro_export]
+macro_rules! alignment_assert {
+    ($align:literal, $addr:literal) => {};
+}
+
+#[cfg(not(feature = "allow_unaligned_tags"))]
+#[doc(hidden)]
+#[macro_export]
+macro_rules! alignment_assert {
+    (2, $addr:literal) => {
+        assert!($addr % 2 == 0, "Word address must be divisible by 2");
+    };
+    (4, $addr:literal) => {
+        assert!($addr % 4 == 0, "Double word address must be divisible by 4");
+    };
+    (8, $addr:literal) => {
+        assert!($addr % 8 == 0, "Long word address must be divisible by 8");
+    };
+}
+
 /// Read tag values from a process image with absolute addressing.
 ///
 /// Addresses must be aligned to the size of the datatype (i.e. word=2, dword=4, lword=8).
@@ -41,17 +63,17 @@ macro_rules! tag {
     }};
     ($buf:expr, W, $addr:expr) => {{
         let buffer: &[u8] = $buf;
-        assert!($addr % 2 == 0, "Word address must be divisible by 2");
+        $crate::alignment_assert!(2, $addr);
         u16::from_be_bytes(buffer[$addr..$addr + 2].try_into().unwrap())
     }};
     ($buf:expr, D, $addr:expr) => {{
         let buffer: &[u8] = $buf;
-        assert!($addr % 4 == 0, "Double word address must be divisible by 4");
+        $crate::alignment_assert!(4, $addr);
         u32::from_be_bytes(buffer[$addr..$addr + 4].try_into().unwrap())
     }};
     ($buf:expr, L, $addr:expr) => {{
         let buffer: &[u8] = $buf;
-        assert!($addr % 8 == 0, "Long word address must be divisible by 8");
+        $crate::alignment_assert!(8, $addr);
         u64::from_be_bytes(buffer[$addr..$addr + 8].try_into().unwrap())
     }};
     ($buf:expr, $addr1:expr, $addr2:expr) => {{
@@ -98,17 +120,17 @@ macro_rules! tag_mut {
     }};
     ($buf:expr, W, $addr:expr) => {{
         let buffer: &mut [u8] = $buf;
-        assert!($addr % 2 == 0, "Word address must be divisible by 2");
+        $crate::alignment_assert!(2, $addr);
         $crate::WordMut::new((&mut buffer[$addr..$addr + 2]).try_into().unwrap())
     }};
     ($buf:expr, D, $addr:expr) => {{
         let buffer: &mut [u8] = $buf;
-        assert!($addr % 4 == 0, "Double word address must be divisible by 4");
+        $crate::alignment_assert!(4, $addr);
         $crate::DWordMut::new((&mut buffer[$addr..$addr + 4]).try_into().unwrap())
     }};
     ($buf:expr, L, $addr:expr) => {{
         let buffer: &mut [u8] = $buf;
-        assert!($addr % 8 == 0, "Long word address must be divisible by 8");
+        $crate::alignment_assert!(8, $addr);
         $crate::LWordMut::new((&mut buffer[$addr..$addr + 8]).try_into().unwrap())
     }};
     ($buf:expr, $addr1:expr, $addr2:expr) => {{
@@ -135,21 +157,21 @@ macro_rules! tag_method {
     ($vis:vis, $name:ident, mut, W, $addr:literal) => {
         #[inline(always)]
         $vis fn $name(&mut self) -> $crate::WordMut<'_> {
-            assert!($addr % 2 == 0, "Word address must be divisible by 2");
+            $crate::alignment_assert!(2, $addr);
             $crate::WordMut::new((&mut self.buf[$addr..$addr + 2]).try_into().unwrap())
         }
     };
     ($vis:vis, $name:ident, mut, D, $addr:literal) => {
         #[inline(always)]
         $vis fn $name(&mut self) -> $crate::DWordMut<'_> {
-            assert!($addr % 4 == 0, "Double word address must be divisible by 4");
+            $crate::alignment_assert!(4, $addr);
             $crate::DWordMut::new((&mut self.buf[$addr..$addr + 4]).try_into().unwrap())
         }
     };
     ($vis:vis, $name:ident, mut, L, $addr:literal) => {
         #[inline(always)]
         $vis fn $name(&mut self) -> $crate::LWordMut<'_> {
-            assert!($addr % 8 == 0, "Long word address must be divisible by 8");
+            $crate::alignment_assert!(8, $addr);
             $crate::LWordMut::new((&mut self.buf[$addr..$addr + 8]).try_into().unwrap())
         }
     };
@@ -174,21 +196,21 @@ macro_rules! tag_method {
     ($vis:vis, $name:ident, const, W, $addr:literal) => {
         #[inline(always)]
         $vis fn $name(&self) -> u16 {
-            assert!($addr % 2 == 0, "Word address must be divisible by 2");
+            $crate::alignment_assert!(2, $addr);
             u16::from_be_bytes(self.buf[$addr..$addr + 2].try_into().unwrap())
         }
     };
     ($vis:vis, $name:ident, const, D, $addr:literal) => {
         #[inline(always)]
         $vis fn $name(&self) -> u32 {
-            assert!($addr % 4 == 0, "Double word address must be divisible by 4");
+            $crate::alignment_assert!(4, $addr);
             u32::from_be_bytes(self.buf[$addr..$addr + 4].try_into().unwrap())
         }
     };
     ($vis:vis, $name:ident, const, L, $addr:literal) => {
         #[inline(always)]
         $vis fn $name(&self) -> u64 {
-            assert!($addr % 8 == 0, "Long word address must be divisible by 8");
+            $crate::alignment_assert!(8, $addr);
             u64::from_be_bytes(self.buf[$addr..$addr + 8].try_into().unwrap())
         }
     };
@@ -760,5 +782,119 @@ mod tests {
         assert_eq!(tag!(&pi_buffer, 1, 0), false);
         assert_eq!(tag!(&pi_buffer, W, 2), 1337);
         assert_eq!(tag!(&pi_buffer, B, 0), 1);
+    }
+
+    #[test]
+    #[cfg_attr(
+        not(feature = "allow_unaligned_tags"),
+        should_panic(expected = "Word address must be divisible by 2")
+    )]
+    fn test_unaligned_word_tag() {
+        let buf = [
+            0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef,
+        ];
+        assert_eq!(tag!(&buf, W, 1), 0xadbe);
+    }
+
+    #[test]
+    #[cfg_attr(
+        not(feature = "allow_unaligned_tags"),
+        should_panic(expected = "Word address must be divisible by 2")
+    )]
+    fn test_unaligned_word_tag_mut() {
+        let mut buf = [
+            0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef,
+        ];
+        *tag_mut!(&mut buf, W, 1) = 0xcafe;
+        assert_eq!(tag!(&buf, W, 1), 0xcafe);
+    }
+
+    process_image_owned! {
+        pub struct TestPiPanic, mut TestPiPanicMut: 12 {
+            pub unaligned_word: (W, 1),
+            pub unaligned_dword: (D, 2),
+            pub unaligned_lword: (L, 4),
+        }
+    }
+
+    #[test]
+    #[cfg_attr(
+        not(feature = "allow_unaligned_tags"),
+        should_panic(expected = "Word address must be divisible by 2")
+    )]
+    fn test_unaligned_word() {
+        let pi = TestPiPanic::try_from(&[
+            0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef,
+        ])
+        .unwrap();
+        assert_eq!(pi.unaligned_word(), 0xadbe);
+    }
+
+    #[test]
+    #[cfg_attr(
+        not(feature = "allow_unaligned_tags"),
+        should_panic(expected = "Word address must be divisible by 2")
+    )]
+    fn test_unaligned_word_mut() {
+        let mut pi = TestPiPanic::try_from(&[
+            0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef,
+        ])
+        .unwrap();
+        *pi.as_mut().unaligned_word() = 0xcafe;
+        assert_eq!(pi.unaligned_word(), 0xcafe);
+    }
+
+    #[test]
+    #[cfg_attr(
+        not(feature = "allow_unaligned_tags"),
+        should_panic(expected = "Double word address must be divisible by 4")
+    )]
+    fn test_unaligned_dword() {
+        let pi = TestPiPanic::try_from(&[
+            0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef,
+        ])
+        .unwrap();
+        assert_eq!(pi.unaligned_dword(), 0xbeefdead);
+    }
+
+    #[test]
+    #[cfg_attr(
+        not(feature = "allow_unaligned_tags"),
+        should_panic(expected = "Double word address must be divisible by 4")
+    )]
+    fn test_unaligned_dword_mut() {
+        let mut pi = TestPiPanic::try_from(&[
+            0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef,
+        ])
+        .unwrap();
+        *pi.as_mut().unaligned_dword() = 0xc0ffee77;
+        assert_eq!(pi.unaligned_dword(), 0xc0ffee77);
+    }
+
+    #[test]
+    #[cfg_attr(
+        not(feature = "allow_unaligned_tags"),
+        should_panic(expected = "Long word address must be divisible by 8")
+    )]
+    fn test_unaligned_lword() {
+        let pi = TestPiPanic::try_from(&[
+            0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef,
+        ])
+        .unwrap();
+        assert_eq!(pi.unaligned_lword(), 0xdeadbeefdeadbeef);
+    }
+
+    #[test]
+    #[cfg_attr(
+        not(feature = "allow_unaligned_tags"),
+        should_panic(expected = "Long word address must be divisible by 8")
+    )]
+    fn test_unaligned_lword_mut() {
+        let mut pi = TestPiPanic::try_from(&[
+            0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef,
+        ])
+        .unwrap();
+        *pi.as_mut().unaligned_lword() = 0x7fff000000c0ffee;
+        assert_eq!(pi.unaligned_lword(), 0x7fff000000c0ffee);
     }
 }
