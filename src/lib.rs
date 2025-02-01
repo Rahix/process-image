@@ -200,12 +200,14 @@ macro_rules! tag_method {
     };
 }
 
-/// Build tag table for symbolic access to a process image.
+/// Build tag table for symbolic access into a process image buffer.
 ///
 /// - You will get two structs, one for mutable and one for immutable access (or just one of them,
 ///   if you want).
 /// - The process image has a fixed size which is always enforced.
 /// - The tag addresses are in the format described in the [`tag!()`][`tag`] macro.
+/// - The process image buffer is referenced, for owned buffers,
+///   see [`process_image_owned!{}`][`process_image_owned`].
 ///
 /// ## Example
 /// ```
@@ -487,6 +489,148 @@ macro_rules! process_image {
     };
 }
 
+/// Build tag table for symbolic access into an _owned_ process image buffer.
+///
+/// - This macro generates a struct that owns the process image buffer.  For a referenced variant,
+///   see [`process_image!{}`][`process_image`].
+/// - The method immediately available on the struct provide immutable access.  For mutable access,
+///   call `.as_mut()` to get a mutable accessor struct.  The methods on that one then provide mutable
+///   access.
+/// - The tag addresses are in the format described in the [`tag!()`][`tag`] macro.
+/// - You can construct a `process_image_owned` from zeros (`new_zeroed()`) or from a
+///   pre-initialized buffer by using `From<[u8; SIZE]` or `TryFrom<&[u8]>`.
+///
+/// ## Example
+/// ```
+/// process_image::process_image_owned! {
+///     //                                      +-- Size of the process image in bytes
+///     //                                      V
+///     pub struct PiExampleOwned, mut PiExampleMut: 16 {
+///         //  +-- Tag Name  +-- Absolute Address
+///         //  V             V
+///         pub sensor_left:  (X, 0, 0),    // %MX0.0
+///         pub sensor_right: (X, 0, 1),    // %MX0.1
+///         pub temperature:  (D, 4),       // %MD4
+///         pub setpoint:     (W, 2),       // %MW2
+///     }
+/// }
+///
+/// let pi = PiExampleOwned::new_zeroed();
+///
+/// dbg!(pi.sensor_left());
+/// dbg!(pi.sensor_left());
+///
+/// // You need to use try_from() when using a slice.  The unwrap() will panic when the size of the
+/// // slice does not match the size of the process image.
+/// let pi_buf = [0u8; 16];
+/// let pi_slice = &pi_buf[..];
+/// let mut pi = PiExampleOwned::try_from(pi_slice).unwrap();
+///
+/// // Mutable access:
+/// *pi.as_mut().temperature() = 1234;
+/// *pi.as_mut().setpoint() = 72;
+/// *pi.as_mut().sensor_left() = false;
+/// ```
+#[macro_export]
+macro_rules! process_image_owned {
+    (
+        $( #[$meta:meta] )*
+        $vis:vis struct $ProcessImage:ident, mut $ProcessImageMut:ident: $SIZE:literal {
+            $(
+                $( #[$field_meta:meta] )*
+                $field_vis:vis $field_name:ident: ($($tag:tt)+)
+            ),*
+            $(,)?
+        }
+    ) => {
+        $( #[$meta] )*
+        $vis struct $ProcessImage {
+            buf: [u8; $SIZE],
+        }
+
+        impl $ProcessImage {
+            #[inline(always)]
+            pub fn new_zeroed() -> Self {
+                Self {
+                    buf: [0u8; $SIZE],
+                }
+            }
+
+            #[inline(always)]
+            pub fn as_mut(&mut self) -> $ProcessImageMut {
+                $ProcessImageMut::from(&mut self.buf)
+            }
+
+            #[inline(always)]
+            pub fn as_slice(&self) -> &[u8] {
+                &self.buf[..]
+            }
+
+            #[inline(always)]
+            pub fn as_slice_mut(&mut self) -> &mut [u8] {
+                &mut self.buf[..]
+            }
+
+            $(
+                $( #[$field_meta] )*
+                $crate::tag_method!($vis, $field_name, const, $($tag)+);
+            )*
+        }
+
+        impl ::core::convert::From<&[u8; $SIZE]> for $ProcessImage {
+            #[inline(always)]
+            fn from(buf_in: &[u8; $SIZE]) -> Self {
+                let mut buf = [0u8; $SIZE];
+                buf.copy_from_slice(buf_in);
+                Self { buf }
+            }
+        }
+
+        impl ::core::convert::TryFrom<&[u8]> for $ProcessImage {
+            type Error = ::core::array::TryFromSliceError;
+
+            #[inline(always)]
+            fn try_from(buf: &[u8]) -> Result<Self, Self::Error> {
+                buf.try_into().map(|buf: &[u8; $SIZE]| Self { buf: buf.clone() })
+            }
+        }
+
+        impl ::core::convert::AsRef<[u8]> for $ProcessImage {
+            #[inline(always)]
+            fn as_ref(&self) -> &[u8] {
+                &self.buf[..]
+            }
+        }
+
+        impl ::core::convert::AsMut<[u8]> for $ProcessImage {
+            #[inline(always)]
+            fn as_mut(&mut self) -> &mut [u8] {
+                &mut self.buf[..]
+            }
+        }
+
+        impl ::core::fmt::Debug for $ProcessImage {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                f.debug_struct(::core::stringify!($ProcessImage))
+                    $(
+                    .field(::core::stringify!($field_name), &self.$field_name())
+                    )*
+                    .finish()
+            }
+        }
+
+        $crate::process_image! {
+            $(#[$meta])*
+            $vis struct mut $ProcessImageMut: $SIZE {
+                $(
+                    $(#[$field_meta])*
+                    $field_vis $field_name: ($($tag)+),
+                )*
+            }
+        }
+    };
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
@@ -555,6 +699,60 @@ mod tests {
         assert_eq!(pi.speed(), 1337);
         assert_eq!(pi.length(), 1);
 
+        assert_eq!(tag!(&pi_buffer, 1, 0), false);
+        assert_eq!(tag!(&pi_buffer, W, 2), 1337);
+        assert_eq!(tag!(&pi_buffer, B, 0), 1);
+    }
+
+    process_image_owned! {
+        pub struct TestPiOwned, mut TestPiOwnedMut: 4 {
+            pub btn_start: (X, 1, 0),
+            pub btn_stop: (1, 1),
+            pub btn_reset: (X, 1, 2),
+            pub speed: (W, 2),
+            pub length: (B, 0),
+        }
+    }
+
+    #[test]
+    fn pi_owned_macro_smoke() {
+        let pi_buffer = [128, 0x55, 0xde, 0xad];
+
+        let mut pi = TestPiOwned::new_zeroed();
+        assert_eq!(pi.btn_start(), false);
+        assert_eq!(pi.btn_stop(), false);
+        assert_eq!(pi.btn_reset(), false);
+        assert_eq!(pi.speed(), 0);
+        assert_eq!(pi.length(), 0);
+
+        pi.as_slice_mut().copy_from_slice(&pi_buffer);
+        assert_eq!(pi.btn_start(), true);
+        assert_eq!(pi.btn_stop(), false);
+        assert_eq!(pi.btn_reset(), true);
+        assert_eq!(pi.speed(), 0xdead);
+        assert_eq!(pi.length(), 128);
+
+        let mut pi = TestPiOwned::try_from(&pi_buffer).unwrap();
+        assert_eq!(pi.btn_start(), true);
+        assert_eq!(pi.btn_stop(), false);
+        assert_eq!(pi.btn_reset(), true);
+        assert_eq!(pi.speed(), 0xdead);
+        assert_eq!(pi.length(), 128);
+
+        *pi.as_mut().btn_start() = false;
+        *pi.as_mut().btn_stop() = true;
+        *pi.as_mut().btn_reset() = true;
+
+        *pi.as_mut().speed() = 1337;
+        *pi.as_mut().length() = 1;
+
+        assert_eq!(pi.btn_start(), false);
+        assert_eq!(pi.btn_stop(), true);
+        assert_eq!(pi.btn_reset(), true);
+        assert_eq!(pi.speed(), 1337);
+        assert_eq!(pi.length(), 1);
+
+        let pi_buffer = pi.as_slice();
         assert_eq!(tag!(&pi_buffer, 1, 0), false);
         assert_eq!(tag!(&pi_buffer, W, 2), 1337);
         assert_eq!(tag!(&pi_buffer, B, 0), 1);
