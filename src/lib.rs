@@ -1,3 +1,89 @@
+//! Macros for accessing _tags_ in a _process image_.
+//!
+//! # What's this?
+//! In industrial controls, namely PLC (programmable logic controller) programming, data is usually
+//! stored in _process images_. A process image is nothing more than a chunk of memory that
+//! contains a snapshot of all values known about the system that is being controlled.
+//!
+//! This data is commonly split into a `PII` (process image of inputs) and a `PIQ` (process image
+//! of outputs). The `PII` contains things like sensor data, while the `PIQ` is filled with the
+//! states of solenoid valves or speed setpoints for motors, for example.
+//!
+//! IEC 61131-3 defines a syntax for addressing data in process images.  It works like this:
+//!
+//! ```text
+//!  +------- The process image that is referenced: I=inputs, Q=outputs, M=internal memory
+//!  |+------ The type of the tag: X=bit, B=byte, W=word, D=double word, L=long word
+//!  || +---- The byte offset inside the process image
+//!  || |  +- The bit offset in the addressed byte
+//!  vv v  v
+//! %IX100.4 = bit 4 in byte address 100
+//! %IB8     = byte at address 8
+//! %IW16    = word starting at address 16
+//! ```
+//!
+//! | Specifier | Rust | Type |
+//! | --- | --- | --- |
+//! | `X` (may be omitted) | `bool` | Boolean Bit |
+//! | `B` | `u8` | Byte |
+//! | `W` | `u16` | Word |
+//! | `D` | `u32` | Double Word |
+//! | `L` | `u64` | Long Word |
+//!
+//! The meaning of each bit and byte is defined by the hardware configuration of the PLC and the
+//! equipment connected to it.  Usually the input and output addresses are also referenced in
+//! electrical wiring diagrams of the control system.
+//!
+//! Because directly fiddling with bits and bytes in a chunk of memory to fetch and set process
+//! data is inconvenient, _tags_ are assigned to the addresses in a process image, giving the data
+//! symbolic names.  This crate provides macros to assign such tags to a memory buffer in rust.
+//!
+//! # How To
+//! The [`tag!()`][`tag`] and [`tag_mut!()`][`tag`] macros are used to immediately address a value
+//! inside a buffer slice.  This is meant for fetching data by address directly.
+//!
+//! The [`process_image!()`][`process_image`] and [`process_image_owned!()`][`process_image_owned`]
+//! macros are used to build more permanent definitions of the data inside a process image.  These
+//! macros generate struct-wrappers around a buffer with methods to access the individual tags.
+//! Please see the respective documentation for details.
+//!
+//! The syntax for addresses is slightly different from the IEC 61131-3 syntax, to stay within the
+//! bounds of rust declarative macros.  Here are a few examples that should be self-explanatory:
+//!
+//! ```
+//! // Process Image of Inputs
+//! let pii = [0x00; 16];
+//!
+//! let b1: bool = process_image::tag!(&pii, X, 0, 0); // %IX0.0
+//! let b2: bool = process_image::tag!(&pii, 0, 1);    // %IX0.1
+//! let by: u8   = process_image::tag!(&pii, B, 1);    // %IB1
+//! let w: u16   = process_image::tag!(&pii, W, 2);    // %IW2
+//! let d: u32   = process_image::tag!(&pii, D, 4);    // %ID4
+//! let l: u64   = process_image::tag!(&pii, L, 8);    // %IL8
+//! ```
+//!
+//! # Endianness
+//! All data is accessed in big-endian (MSB-first) byte order.
+//!
+//! # Alignment
+//! By default, addresses of _words, double words,_ and _long words_ must be aligned to the size of
+//! the data type.  Unaligned addresses will lead to a panic at runtime.
+//!
+//! | Type | Alignment |
+//! | --- | --- |
+//! | Boolean Bit | 1 (none) |
+//! | Byte | 1 (none) |
+//! | Word | 2 |
+//! | Double Word | 4 |
+//! | Long Word | 8 |
+//!
+//! However, there are some situations where this behavior is undesired.  In some control systems,
+//! the process image is constructed without alignment.  To cater to such uses,
+//! alignment-enforcement can be disabled globally with the `allow_unaligned_tags` crate feature.
+//! Do note that this will disable alignment globally for all users of `process-image` in the
+//! crate dependency-graph.
+//!
+//! In the future, alignment-enforcement might be dropped entirely.
 #![cfg_attr(not(test), no_std)]
 
 mod access;
