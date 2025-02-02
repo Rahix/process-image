@@ -21,3 +21,9 @@ repos:
       entry: cargo test
       files: ^(src|tests)/.*\.rs$
       pass_filenames: false
+    - id: cargo-test
+      name: Run testsuite without alignment-enforcement
+      language: system
+      entry: cargo test --features allow_unaligned_tags
+      files: ^(src|tests)/.*\.rs$
+      pass_filenames: false
