@@ -93,20 +93,20 @@ pub use access::{BitMut, DWordMut, LWordMut, WordMut};
 #[doc(hidden)]
 #[macro_export]
 macro_rules! alignment_assert {
-    ($align:literal, $addr:literal) => {};
+    ($align:literal, $addr:expr) => {};
 }
 
 #[cfg(not(feature = "allow_unaligned_tags"))]
 #[doc(hidden)]
 #[macro_export]
 macro_rules! alignment_assert {
-    (2, $addr:literal) => {
+    (2, $addr:expr) => {
         assert!($addr % 2 == 0, "Word address must be divisible by 2");
     };
-    (4, $addr:literal) => {
+    (4, $addr:expr) => {
         assert!($addr % 4 == 0, "Double word address must be divisible by 4");
     };
-    (8, $addr:literal) => {
+    (8, $addr:expr) => {
         assert!($addr % 8 == 0, "Long word address must be divisible by 8");
     };
 }
@@ -763,6 +763,8 @@ mod tests {
 
         assert_eq!(tag!(&pi, W, 2), 0x80ff);
         assert_eq!(*tag_mut!(&mut pi, W, 2), 0x80ff);
+        let addr = 2;
+        assert_eq!(*tag_mut!(&mut pi, W, addr), 0x80ff);
         assert_eq!(tag!(&pi, D, 0), 0x54aa80ff);
         assert_eq!(*tag_mut!(&mut pi, D, 0), 0x54aa80ff);
 
