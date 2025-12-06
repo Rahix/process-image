@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- Fixed a regression where only literals are allowed in the `tag!()` and
+  `tag_mut!()` macros, but previously (v0.2.1), expressions were also allowed.
+  Now expressions are working again as well.
 
 
 ## [0.2.2] - 2025-02-02
